@@ -2,6 +2,7 @@
   "name": "md-editor",
   "version": "1.0.0",
   "description": "WYSIWYG Markdown Editor for Windows",
+  "author": "Markdown Editor",
   "main": "electron/main.js",
   "scripts": {
     "dev": "vite build && electron .",
@@ -48,8 +49,7 @@
       "allowToChangeInstallationDirectory": true
     },
     "win": {
-      "target": "nsis",
-      "icon": "assets/icon.png"
+      "target": "nsis"
     }
   }
 }
