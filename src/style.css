@@ -17,6 +17,10 @@
   --resizer-bg: #e0e0e0;
   --scrollbar-thumb: #c0c0c0;
   --scrollbar-track: transparent;
+  /* User-configurable (set by settings menu) */
+  --editor-font-family: 'Times New Roman', '宋体', SimSun, 'Microsoft YaHei', serif;
+  --editor-font-size: 18px;
+  --editor-content-padding: 32px 28px;
 }
 
 /* ========================================
@@ -101,15 +105,20 @@ html, body {
    Milkdown Editor Styling
    ======================================== */
 #editor-container .milkdown {
-  max-width: 100%; margin: 0 auto; padding: 32px 28px 100px; min-height: 100%;
-  font-family: 'Times New Roman', '宋体', SimSun, 'Microsoft YaHei', serif;
-  font-size: 18px; line-height: 1.8;
+  max-width: 100%; margin: 0 auto;
+  padding: var(--editor-content-padding);
+  padding-bottom: 100px;
+  min-height: 100%;
+  font-family: var(--editor-font-family);
+  font-size: var(--editor-font-size);
+  line-height: 1.8;
 }
 
 /* Milkdown editor internal content */
 #editor-container .milkdown .ProseMirror {
-  font-family: 'Times New Roman', '宋体', SimSun, 'Microsoft YaHei', serif;
-  font-size: 18px; line-height: 1.8;
+  font-family: var(--editor-font-family);
+  font-size: var(--editor-font-size);
+  line-height: 1.8;
   outline: none;
 }
 

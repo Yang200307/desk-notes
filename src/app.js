@@ -10,7 +10,30 @@ let currentFilePath = null;
 let editorApi = null;
 let autoSaveTimer = null;
 let isDirty = false;
+let originalContent = '';   // for revert on cancel-close
 const AUTO_SAVE_DELAY = 2000;
+
+// ── Default Settings (persisted to localStorage) ──
+const DEFAULTS = {
+  fontFamily: "'Times New Roman', '宋体', SimSun, 'Microsoft YaHei', serif",
+  fontSize: '18px',
+  contentPadding: '32px 28px',
+};
+
+function loadSetting(key) {
+  return localStorage.getItem('md-editor-' + key) || DEFAULTS[key];
+}
+
+function saveSetting(key, value) {
+  localStorage.setItem('md-editor-' + key, value);
+}
+
+function applySettings() {
+  const root = document.documentElement;
+  root.style.setProperty('--editor-font-family', loadSetting('fontFamily'));
+  root.style.setProperty('--editor-font-size', loadSetting('fontSize'));
+  root.style.setProperty('--editor-content-padding', loadSetting('contentPadding'));
+}
 
 // ── DOM refs ──
 const statusPath = document.getElementById('status-path');
@@ -20,12 +43,14 @@ const editorContainer = document.getElementById('editor-container');
 // ── File Operations ──
 async function openFile(filePath, content) {
   currentFilePath = filePath;
+  originalContent = content;           // snapshot for revert
   statusPath && (statusPath.textContent = filePath);
   setActiveFile(filePath);
   clearMermaidPreviews(editorContainer);
 
   editorApi = await createEditor(editorContainer, content);
   setTimeout(() => renderMermaidBlocks(editorContainer), 600);
+  markClean();
 }
 
 function markDirty() {
@@ -41,8 +66,11 @@ async function saveCurrentFile(isAutoSave = false) {
   const md = editorApi.getMarkdown();
   const result = await window.electronAPI.writeFile(currentFilePath, md);
   if (result.success) {
-    // Only clear dirty flag on manual save, not auto-save
-    if (!isAutoSave) markClean();
+    if (!isAutoSave) {
+      // Manual save: clear dirty AND update baseline so cancel-close has nothing to revert
+      markClean();
+      originalContent = md;
+    }
     updateSaveStatus('已保存');
   } else {
     updateSaveStatus('保存失败');
@@ -78,6 +106,62 @@ function setupMermaidWatch() {
   observer.observe(editorContainer, { childList: true, subtree: true });
 }
 
+// ── Close Confirmation ──
+async function handleConfirmClose() {
+  if (!isDirty) { window.electronAPI?.forceClose(); return; }
+  // 确定=保存并退出  取消=放弃修改并关闭
+  const choice = confirm(
+    '文件已被修改，是否保存？\n\n' +
+    '"确定" = 保存修改并退出\n' +
+    '"取消" = 放弃所有修改并退出'
+  );
+  if (choice) {
+    // Save → update baseline → close
+    await saveCurrentFile();
+    window.electronAPI?.forceClose();
+  } else {
+    // Revert to original content (undo all edits since open/last manual save)
+    if (originalContent !== undefined && currentFilePath) {
+      await window.electronAPI.writeFile(currentFilePath, originalContent);
+    }
+    window.electronAPI?.forceClose();
+  }
+}
+
+// ── Settings ──
+const FONT_OPTIONS = [
+  { label: '宋体 + Times New Roman', value: "'Times New Roman', '宋体', SimSun, 'Microsoft YaHei', serif" },
+  { label: '微软雅黑', value: "'Microsoft YaHei', '微软雅黑', sans-serif" },
+  { label: '楷体 + Georgia', value: "Georgia, '楷体', KaiTi, serif" },
+  { label: 'Consolas + 宋体', value: "Consolas, '宋体', SimSun, monospace" },
+];
+
+const SIZE_OPTIONS = [
+  { label: '小 (15px)', value: '15px' },
+  { label: '中 (18px)', value: '18px' },
+  { label: '大 (21px)', value: '21px' },
+  { label: '特大 (24px)', value: '24px' },
+];
+
+const PADDING_OPTIONS = [
+  { label: '紧凑', value: '32px 16px' },
+  { label: '标准', value: '32px 28px' },
+  { label: '宽松', value: '40px 48px' },
+  { label: '极简', value: '24px 8px' },
+];
+
+function cycleSetting(type, options) {
+  const current = loadSetting(type);
+  const idx = options.findIndex(o => o.value === current);
+  const next = options[(idx + 1) % options.length];
+  saveSetting(type, next.value);
+  applySettings();
+  updateSaveStatus(type === 'fontFamily' ? `字体: ${next.label}` :
+                    type === 'fontSize' ? `字号: ${next.label}` :
+                    `边距: ${next.label}`);
+  setTimeout(() => updateSaveStatus('已保存'), 2000);
+}
+
 // ── Menu Actions ──
 function setupMenuHandler() {
   if (!window.electronAPI) return;
@@ -92,7 +176,11 @@ function setupMenuHandler() {
         break;
       }
       case 'confirm-close': await handleConfirmClose(); break;
-      case 'save-and-close': await saveCurrentFile(); window.electronAPI?.forceClose(); break;
+
+      // Settings
+      case 'setting-font': cycleSetting('fontFamily', FONT_OPTIONS); break;
+      case 'setting-size': cycleSetting('fontSize', SIZE_OPTIONS); break;
+      case 'setting-padding': cycleSetting('contentPadding', PADDING_OPTIONS); break;
     }
   });
 }
@@ -104,19 +192,6 @@ async function handleExportPDF() {
   else if (result.error !== 'canceled') {
     updateSaveStatus('导出失败');
     window.electronAPI?.showError('导出错误', result.error || '未知错误');
-  }
-}
-
-async function handleConfirmClose() {
-  if (!isDirty) { window.electronAPI?.forceClose(); return; }
-  // Show confirmation dialog
-  const choice = confirm('文件尚未保存，是否保存后退出？\n\n"确定" = 保存并退出\n"取消" = 不退出（继续编辑）');
-  if (choice) {
-    await saveCurrentFile();
-    window.electronAPI?.forceClose();
-  } else {
-    // Cancel close — stay in the app
-    window.electronAPI?.cancelClose();
   }
 }
 
@@ -161,6 +236,8 @@ function setupKeyboardShortcuts() {
 
 // ── Bootstrap ──
 async function bootstrap() {
+  applySettings();
+
   const initialTheme = await initTheme();
   initMermaid(initialTheme);
 
@@ -188,7 +265,8 @@ async function bootstrap() {
     '- 代码语法高亮\n' +
     '- 导出 PDF: **文件 → 导出 PDF**\n' +
     '- 自动保存: 每 2 秒自动保存\n\n' +
-    '按 **Ctrl+O** 打开文件，**Ctrl+T** 切换主题。');
+    '按 **Ctrl+O** 打开文件，**Ctrl+T** 切换主题。\n\n' +
+    '菜单栏 **设置** 可调整字体、字号和页面宽度。');
 
   setTimeout(() => renderMermaidBlocks(editorContainer), 600);
   updateSaveStatus('就绪');

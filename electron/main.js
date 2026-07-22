@@ -82,6 +82,23 @@ function buildMenu() {
         { label: '开发者工具', accelerator: 'F12', role: 'toggleDevTools' },
       ],
     },
+    {
+      label: '设置',
+      submenu: [
+        {
+          label: '字体切换',
+          click: () => mainWindow?.webContents.send('menu:action', 'setting-font'),
+        },
+        {
+          label: '字号切换',
+          click: () => mainWindow?.webContents.send('menu:action', 'setting-size'),
+        },
+        {
+          label: '页面宽度',
+          click: () => mainWindow?.webContents.send('menu:action', 'setting-padding'),
+        },
+      ],
+    },
   ];
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
