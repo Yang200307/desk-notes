@@ -34,7 +34,7 @@ export async function refreshSidebar() {
   fileList.innerHTML = '';
 
   if (result.files.length === 0) {
-    fileList.innerHTML = '<div class="file-item placeholder">No .md files in directory</div>';
+    fileList.innerHTML = '<div class="file-item placeholder">该目录下没有 .md 文件</div>';
     return;
   }
 
@@ -54,7 +54,7 @@ export async function refreshSidebar() {
         setActiveFile(file.path);
         onFileSelectCallback?.(file.path, res.content);
       } else {
-        window.electronAPI.showError('Error', `Cannot read file: ${res.error}`);
+        window.electronAPI.showError('错误', `无法读取文件: ${res.error}`);
       }
     });
 

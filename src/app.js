@@ -31,21 +31,21 @@ async function saveCurrentFile() {
   if (!currentFilePath || !editorApi || !window.electronAPI) return;
   const md = editorApi.getMarkdown();
   const result = await window.electronAPI.writeFile(currentFilePath, md);
-  updateSaveStatus(result.success ? 'Saved' : 'Save error');
+  updateSaveStatus(result.success ? '已保存' : '保存失败');
   return result;
 }
 
 function updateSaveStatus(text) {
   if (statusSave) {
     statusSave.textContent = text;
-    statusSave.style.color = text === 'Saved' ? 'var(--text-muted)' : 'var(--accent)';
+    statusSave.style.color = text === '已保存' ? 'var(--text-muted)' : 'var(--accent)';
   }
 }
 
 // ── Auto-Save ──
 function setupAutoSave() {
   const observer = new MutationObserver(() => {
-    updateSaveStatus('Unsaved…');
+    updateSaveStatus('未保存…');
     if (autoSaveTimer) clearTimeout(autoSaveTimer);
     autoSaveTimer = setTimeout(() => saveCurrentFile(), AUTO_SAVE_DELAY);
   });
@@ -80,12 +80,12 @@ function setupMenuHandler() {
 }
 
 async function handleExportPDF() {
-  updateSaveStatus('Exporting PDF…');
+  updateSaveStatus('正在导出 PDF…');
   const result = await exportToPDF();
-  if (result.success) updateSaveStatus('PDF exported');
+  if (result.success) updateSaveStatus('PDF 已导出');
   else if (result.error !== 'canceled') {
-    updateSaveStatus('Export failed');
-    window.electronAPI?.showError('Export Error', result.error || 'Unknown error');
+    updateSaveStatus('导出失败');
+    window.electronAPI?.showError('导出错误', result.error || '未知错误');
   }
 }
 
@@ -148,22 +148,22 @@ async function bootstrap() {
   setupKeyboardShortcuts();
 
   editorApi = await createEditor(editorContainer,
-    '# Welcome to Markdown Editor\n\n' +
-    'Start typing or open a `.md` file to begin.\n\n' +
-    '## Features\n\n' +
-    '- **WYSIWYG editing** — formatting visible as you type\n' +
-    '- LaTeX math: $E = mc^2$\n' +
-    '- Mermaid diagrams: use ````mermaid` code blocks\n' +
-    '- Syntax-highlighted code blocks\n' +
-    '- PDF export via **File → Export PDF**\n' +
-    '- Auto-save every 2 seconds\n\n' +
-    'Press **Ctrl+O** to open a file, **Ctrl+T** to toggle theme.');
+    '# 欢迎使用 Markdown 编辑器\n\n' +
+    '打开一个 `.md` 文件或直接开始输入。\n\n' +
+    '## 功能特性\n\n' +
+    '- **所见即所得编辑** — 输入时即时显示格式效果\n' +
+    '- LaTeX 公式: $E = mc^2$\n' +
+    '- Mermaid 图表: 使用 ````mermaid` 代码块\n' +
+    '- 代码语法高亮\n' +
+    '- 导出 PDF: **文件 → 导出 PDF**\n' +
+    '- 自动保存: 每 2 秒自动保存\n\n' +
+    '按 **Ctrl+O** 打开文件，**Ctrl+T** 切换主题。');
 
   setTimeout(() => renderMermaidBlocks(editorContainer), 600);
-  updateSaveStatus('Ready');
+  updateSaveStatus('就绪');
 }
 
 bootstrap().catch(err => {
   console.error('Bootstrap failed:', err);
-  window.electronAPI?.showError('Startup Error', err.message);
+  window.electronAPI?.showError('启动失败', err.message);
 });

@@ -20,7 +20,7 @@ function createWindow() {
       nodeIntegration: false,
       sandbox: false,
     },
-    title: 'Markdown Editor',
+    title: 'Markdown 编辑器',
     show: false,
   });
 
@@ -40,36 +40,36 @@ function createWindow() {
 function buildMenu() {
   const template = [
     {
-      label: 'File',
+      label: '文件',
       submenu: [
-        { label: 'Open...', accelerator: 'Ctrl+O', click: handleOpenFile },
-        { label: 'Save', accelerator: 'Ctrl+S', click: () => mainWindow?.webContents.send('menu:action', 'save') },
+        { label: '打开...', accelerator: 'Ctrl+O', click: handleOpenFile },
+        { label: '保存', accelerator: 'Ctrl+S', click: () => mainWindow?.webContents.send('menu:action', 'save') },
         { type: 'separator' },
-        { label: 'Export PDF...', accelerator: 'Ctrl+Shift+P',
+        { label: '导出 PDF...', accelerator: 'Ctrl+Shift+P',
           click: () => mainWindow?.webContents.send('menu:action', 'export-pdf') },
         { type: 'separator' },
-        { label: 'Exit', accelerator: 'Alt+F4', click: () => app.quit() },
+        { label: '退出', accelerator: 'Alt+F4', click: () => app.quit() },
       ],
     },
     {
-      label: 'Edit',
+      label: '编辑',
       submenu: [
-        { label: 'Undo', accelerator: 'Ctrl+Z', role: 'undo' },
-        { label: 'Redo', accelerator: 'Ctrl+Y', role: 'redo' },
+        { label: '撤销', accelerator: 'Ctrl+Z', role: 'undo' },
+        { label: '重做', accelerator: 'Ctrl+Y', role: 'redo' },
         { type: 'separator' },
-        { label: 'Cut', accelerator: 'Ctrl+X', role: 'cut' },
-        { label: 'Copy', accelerator: 'Ctrl+C', role: 'copy' },
-        { label: 'Paste', accelerator: 'Ctrl+V', role: 'paste' },
-        { label: 'Select All', accelerator: 'Ctrl+A', role: 'selectAll' },
+        { label: '剪切', accelerator: 'Ctrl+X', role: 'cut' },
+        { label: '复制', accelerator: 'Ctrl+C', role: 'copy' },
+        { label: '粘贴', accelerator: 'Ctrl+V', role: 'paste' },
+        { label: '全选', accelerator: 'Ctrl+A', role: 'selectAll' },
       ],
     },
     {
-      label: 'View',
+      label: '视图',
       submenu: [
-        { label: 'Toggle Theme', accelerator: 'Ctrl+T',
+        { label: '切换主题', accelerator: 'Ctrl+T',
           click: () => mainWindow?.webContents.send('menu:action', 'toggle-theme') },
         { type: 'separator' },
-        { label: 'Toggle Developer Tools', accelerator: 'F12', role: 'toggleDevTools' },
+        { label: '开发者工具', accelerator: 'F12', role: 'toggleDevTools' },
       ],
     },
   ];
@@ -77,9 +77,9 @@ function buildMenu() {
 }
 
 // ── File Operations ──
-const MD_FILE_FILTER = { name: 'Markdown', extensions: ['md', 'markdown', 'mdown', 'mdtext'] };
+const MD_FILE_FILTER = { name: 'Markdown 文件', extensions: ['md', 'markdown', 'mdown', 'mdtext'] };
 const OPEN_DIALOG_OPTS = {
-  title: 'Open Markdown File',
+  title: '打开 Markdown 文件',
   filters: [MD_FILE_FILTER],
   properties: ['openFile'],
 };
@@ -95,10 +95,10 @@ function loadFile(filePath) {
   try {
     const content = fs.readFileSync(filePath, 'utf-8');
     currentFilePath = filePath;
-    mainWindow?.setTitle(`${path.basename(filePath)} — Markdown Editor`);
+    mainWindow?.setTitle(`${path.basename(filePath)} — Markdown 编辑器`);
     mainWindow?.webContents.send('file:opened', { path: filePath, content });
   } catch (err) {
-    dialog.showErrorBox('Error', `Cannot open file: ${err.message}`);
+    dialog.showErrorBox('错误', `无法打开文件: ${err.message}`);
   }
 }
 
@@ -137,7 +137,7 @@ function setupIPC() {
   ipcMain.handle('export:pdf', async () => {
     if (!mainWindow) return { success: false, error: 'No window' };
     const result = await dialog.showSaveDialog(mainWindow, {
-      title: 'Export PDF',
+      title: '导出 PDF',
       defaultPath: currentFilePath ? currentFilePath.replace(/\.(md|markdown)$/i, '.pdf') : 'document.pdf',
       filters: [{ name: 'PDF', extensions: ['pdf'] }],
     });
