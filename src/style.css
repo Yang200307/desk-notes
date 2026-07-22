@@ -59,7 +59,7 @@ html, body {
 
 /* Sidebar */
 #sidebar {
-  width: 240px; min-width: 160px; max-width: 400px;
+  width: 200px; min-width: 140px; max-width: 350px;
   display: flex; flex-direction: column;
   background: var(--bg-sidebar); border-right: 1px solid var(--border-color);
   overflow: hidden; user-select: none;
@@ -101,7 +101,7 @@ html, body {
    Milkdown Editor Styling
    ======================================== */
 #editor-container .milkdown {
-  max-width: 100%; margin: 0 auto; padding: 40px 48px 120px; min-height: 100%;
+  max-width: 100%; margin: 0 auto; padding: 32px 28px 100px; min-height: 100%;
   font-family: 'Times New Roman', '宋体', SimSun, 'Microsoft YaHei', serif;
   font-size: 18px; line-height: 1.8;
 }

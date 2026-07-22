@@ -36,12 +36,17 @@ function markClean() {
   if (isDirty) { isDirty = false; window.electronAPI?.setDirty(false); }
 }
 
-async function saveCurrentFile() {
+async function saveCurrentFile(isAutoSave = false) {
   if (!currentFilePath || !editorApi || !window.electronAPI) return;
   const md = editorApi.getMarkdown();
   const result = await window.electronAPI.writeFile(currentFilePath, md);
-  if (result.success) { markClean(); updateSaveStatus('已保存'); }
-  else updateSaveStatus('保存失败');
+  if (result.success) {
+    // Only clear dirty flag on manual save, not auto-save
+    if (!isAutoSave) markClean();
+    updateSaveStatus('已保存');
+  } else {
+    updateSaveStatus('保存失败');
+  }
   return result;
 }
 
@@ -58,7 +63,7 @@ function setupAutoSave() {
     markDirty();
     updateSaveStatus('未保存…');
     if (autoSaveTimer) clearTimeout(autoSaveTimer);
-    autoSaveTimer = setTimeout(() => saveCurrentFile(), AUTO_SAVE_DELAY);
+    autoSaveTimer = setTimeout(() => saveCurrentFile(true), AUTO_SAVE_DELAY);
   });
   observer.observe(editorContainer, { childList: true, subtree: true, characterData: true });
 }
@@ -139,7 +144,7 @@ function setupResizer() {
   });
   document.addEventListener('mousemove', (e) => {
     if (!isResizing) return;
-    sidebar.style.width = `${Math.max(160, Math.min(400, startWidth + e.clientX - startX))}px`;
+    sidebar.style.width = `${Math.max(140, Math.min(350, startWidth + e.clientX - startX))}px`;
   });
   document.addEventListener('mouseup', () => {
     isResizing = false;
