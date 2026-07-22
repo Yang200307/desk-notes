@@ -77,12 +77,15 @@ function buildMenu() {
 }
 
 // ── File Operations ──
+const MD_FILE_FILTER = { name: 'Markdown', extensions: ['md', 'markdown', 'mdown', 'mdtext'] };
+const OPEN_DIALOG_OPTS = {
+  title: 'Open Markdown File',
+  filters: [MD_FILE_FILTER],
+  properties: ['openFile'],
+};
+
 async function handleOpenFile() {
-  const result = await dialog.showOpenDialog(mainWindow, {
-    title: 'Open Markdown File',
-    filters: [{ name: 'Markdown', extensions: ['md', 'markdown', 'mdown', 'mdtext'] }],
-    properties: ['openFile'],
-  });
+  const result = await dialog.showOpenDialog(mainWindow, OPEN_DIALOG_OPTS);
   if (!result.canceled && result.filePaths.length > 0) {
     loadFile(result.filePaths[0]);
   }
@@ -112,11 +115,7 @@ function setupIPC() {
   });
 
   ipcMain.handle('file:open-dialog', async () => {
-    const result = await dialog.showOpenDialog(mainWindow, {
-      title: 'Open Markdown File',
-      filters: [{ name: 'Markdown', extensions: ['md', 'markdown', 'mdown', 'mdtext'] }],
-      properties: ['openFile'],
-    });
+    const result = await dialog.showOpenDialog(mainWindow, OPEN_DIALOG_OPTS);
     if (result.canceled || !result.filePaths.length) return { success: false };
     const fp = result.filePaths[0];
     const content = fs.readFileSync(fp, 'utf-8');
@@ -155,7 +154,7 @@ function setupIPC() {
   });
 
   ipcMain.handle('theme:get-system', () => nativeTheme.shouldUseDarkColors ? 'dark' : 'light');
-  ipcMain.handle('dialog:show-error', async (_e, title, msg) => { dialog.showErrorBox(title, msg); });
+  ipcMain.handle('dialog:show-error', async (_e, title, msg) => { dialog.showErrorBox(title, msg); return { success: true }; });
 }
 
 // ── Lifecycle ──
@@ -164,10 +163,8 @@ app.whenReady().then(() => {
   buildMenu();
   createWindow();
 
-  app.on('open-file', (_e, fp) => {
-    if (app.isReady()) loadFile(fp);
-    else app.once('ready', () => loadFile(fp));
-  });
+  // Already inside whenReady(), so app is always ready at this point
+  app.on('open-file', (_e, fp) => loadFile(fp));
 
   // Open file from command-line arg (double-click in Explorer)
   const fileArg = process.argv.slice(1).find(a => a.match(/\.(md|markdown)$/i));
