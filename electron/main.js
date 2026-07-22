@@ -5,6 +5,8 @@ const fs = require('fs');
 
 let mainWindow = null;
 let currentFilePath = null;
+let isDirty = false;
+let forceClose = false;
 
 // ── Window ──
 function createWindow() {
@@ -34,6 +36,14 @@ function createWindow() {
 
   mainWindow.once('ready-to-show', () => mainWindow.show());
   mainWindow.on('closed', () => { mainWindow = null; });
+
+  // Close confirmation: intercept close when document is dirty
+  mainWindow.on('close', (e) => {
+    if (isDirty && !forceClose) {
+      e.preventDefault();
+      mainWindow.webContents.send('menu:action', 'confirm-close');
+    }
+  });
 }
 
 // ── Menu ──
@@ -155,6 +165,18 @@ function setupIPC() {
 
   ipcMain.handle('theme:get-system', () => nativeTheme.shouldUseDarkColors ? 'dark' : 'light');
   ipcMain.handle('dialog:show-error', async (_e, title, msg) => { dialog.showErrorBox(title, msg); return { success: true }; });
+
+  // Dirty state tracking for close confirmation
+  ipcMain.handle('dirty:set', (_e, dirty) => { isDirty = dirty; });
+
+  ipcMain.handle('confirm:force-close', () => {
+    forceClose = true; isDirty = false;
+    if (mainWindow) mainWindow.close();
+  });
+
+  ipcMain.handle('confirm:cancel-close', () => {
+    isDirty = true; forceClose = false;
+  });
 }
 
 // ── Pending file queue (wait for renderer ready) ──

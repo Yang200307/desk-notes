@@ -9,6 +9,7 @@ import { exportToPDF } from './export.js';
 let currentFilePath = null;
 let editorApi = null;
 let autoSaveTimer = null;
+let isDirty = false;
 const AUTO_SAVE_DELAY = 2000;
 
 // ── DOM refs ──
@@ -27,11 +28,20 @@ async function openFile(filePath, content) {
   setTimeout(() => renderMermaidBlocks(editorContainer), 600);
 }
 
+function markDirty() {
+  if (!isDirty) { isDirty = true; window.electronAPI?.setDirty(true); }
+}
+
+function markClean() {
+  if (isDirty) { isDirty = false; window.electronAPI?.setDirty(false); }
+}
+
 async function saveCurrentFile() {
   if (!currentFilePath || !editorApi || !window.electronAPI) return;
   const md = editorApi.getMarkdown();
   const result = await window.electronAPI.writeFile(currentFilePath, md);
-  updateSaveStatus(result.success ? '已保存' : '保存失败');
+  if (result.success) { markClean(); updateSaveStatus('已保存'); }
+  else updateSaveStatus('保存失败');
   return result;
 }
 
@@ -45,6 +55,7 @@ function updateSaveStatus(text) {
 // ── Auto-Save ──
 function setupAutoSave() {
   const observer = new MutationObserver(() => {
+    markDirty();
     updateSaveStatus('未保存…');
     if (autoSaveTimer) clearTimeout(autoSaveTimer);
     autoSaveTimer = setTimeout(() => saveCurrentFile(), AUTO_SAVE_DELAY);
@@ -75,6 +86,8 @@ function setupMenuHandler() {
         await refreshMermaid(editorContainer);
         break;
       }
+      case 'confirm-close': await handleConfirmClose(); break;
+      case 'save-and-close': await saveCurrentFile(); window.electronAPI?.forceClose(); break;
     }
   });
 }
@@ -86,6 +99,19 @@ async function handleExportPDF() {
   else if (result.error !== 'canceled') {
     updateSaveStatus('导出失败');
     window.electronAPI?.showError('导出错误', result.error || '未知错误');
+  }
+}
+
+async function handleConfirmClose() {
+  if (!isDirty) { window.electronAPI?.forceClose(); return; }
+  // Show confirmation dialog
+  const choice = confirm('文件尚未保存，是否保存后退出？\n\n"确定" = 保存并退出\n"取消" = 不退出（继续编辑）');
+  if (choice) {
+    await saveCurrentFile();
+    window.electronAPI?.forceClose();
+  } else {
+    // Cancel close — stay in the app
+    window.electronAPI?.cancelClose();
   }
 }
 

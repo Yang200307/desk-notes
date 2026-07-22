@@ -26,6 +26,10 @@ export async function createEditor(container, content) {
 
   await crepe.create();
 
+  // Disable browser spellcheck (red wavy underlines)
+  const pm = el.querySelector('.ProseMirror');
+  if (pm) pm.setAttribute('spellcheck', 'false');
+
   return {
     // Uses Crepe's built-in getMarkdown() which properly serializes
     // ProseMirror document to markdown source via the markdown serializer.

@@ -49,7 +49,7 @@ html, body {
   font-family: 'Times New Roman', '宋体', SimSun, 'Microsoft YaHei', serif;
   background: var(--bg-primary); color: var(--text-primary);
   transition: background 0.3s, color 0.3s;
-  font-size: 16px; line-height: 1.7;
+  font-size: 18px; line-height: 1.8;
 }
 
 /* ========================================
@@ -103,13 +103,14 @@ html, body {
 #editor-container .milkdown {
   max-width: 100%; margin: 0 auto; padding: 40px 48px 120px; min-height: 100%;
   font-family: 'Times New Roman', '宋体', SimSun, 'Microsoft YaHei', serif;
-  font-size: 16px; line-height: 1.8;
+  font-size: 18px; line-height: 1.8;
 }
 
 /* Milkdown editor internal content */
 #editor-container .milkdown .ProseMirror {
   font-family: 'Times New Roman', '宋体', SimSun, 'Microsoft YaHei', serif;
-  font-size: 16px; line-height: 1.8;
+  font-size: 18px; line-height: 1.8;
+  outline: none;
 }
 
 /* Headings */
@@ -120,6 +121,26 @@ html, body {
 /* Code blocks and inline code */
 #editor-container .milkdown code {
   font-family: 'Consolas', 'Courier New', 'SimSun', monospace;
+}
+
+/* Tables — prevent column overlap */
+#editor-container .milkdown table {
+  border-collapse: collapse;
+  table-layout: auto;
+  width: 100%;
+  margin: 1em 0;
+}
+#editor-container .milkdown th,
+#editor-container .milkdown td {
+  padding: 8px 14px;
+  border: 1px solid var(--border-color);
+  word-break: break-word;
+  overflow-wrap: break-word;
+  min-width: 60px;
+}
+#editor-container .milkdown th {
+  background: var(--bg-secondary);
+  font-weight: 600;
 }
 
 /* Force Milkdown color scheme to follow our theme */

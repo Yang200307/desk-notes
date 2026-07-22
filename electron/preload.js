@@ -11,4 +11,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onMenuAction: (cb) => { ipcRenderer.on('menu:action', (_e, action) => cb(action)); },
   onFileOpened: (cb) => { ipcRenderer.on('file:opened', (_e, data) => cb(data)); },
   showError: (title, msg) => ipcRenderer.invoke('dialog:show-error', title, msg),
+  setDirty: (dirty) => ipcRenderer.invoke('dirty:set', dirty),
+  forceClose: () => ipcRenderer.invoke('confirm:force-close'),
+  cancelClose: () => ipcRenderer.invoke('confirm:cancel-close'),
 });
