@@ -166,21 +166,26 @@ function cycleSetting(type, options) {
 function setupMenuHandler() {
   if (!window.electronAPI) return;
   window.electronAPI.onMenuAction(async (action) => {
-    switch (action) {
-      case 'save': await saveCurrentFile(); break;
-      case 'export-pdf': await handleExportPDF(); break;
-      case 'toggle-theme': {
-        const newTheme = toggleTheme();
-        initMermaid(newTheme);
-        await refreshMermaid(editorContainer);
-        break;
-      }
-      case 'confirm-close': await handleConfirmClose(); break;
+    try {
+      switch (action) {
+        case 'save': await saveCurrentFile(); break;
+        case 'export-pdf': await handleExportPDF(); break;
+        case 'toggle-theme': {
+          const newTheme = toggleTheme();
+          initMermaid(newTheme);
+          await refreshMermaid(editorContainer);
+          break;
+        }
+        case 'confirm-close': await handleConfirmClose(); break;
 
-      // Settings
-      case 'setting-font': cycleSetting('fontFamily', FONT_OPTIONS); break;
-      case 'setting-size': cycleSetting('fontSize', SIZE_OPTIONS); break;
-      case 'setting-padding': cycleSetting('contentPadding', PADDING_OPTIONS); break;
+        // Settings
+        case 'setting-font': cycleSetting('fontFamily', FONT_OPTIONS); break;
+        case 'setting-size': cycleSetting('fontSize', SIZE_OPTIONS); break;
+        case 'setting-padding': cycleSetting('contentPadding', PADDING_OPTIONS); break;
+      }
+    } catch (err) {
+      console.error('Menu action error:', action, err);
+      window.electronAPI?.showError('错误', `操作失败: ${err.message}`);
     }
   });
 }
