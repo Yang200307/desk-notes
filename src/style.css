@@ -93,7 +93,7 @@ html, body {
 
 /* Main Area */
 #main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
-#editor-container { flex: 1; overflow: auto; }
+#editor-container { flex: 1; overflow: auto; background: var(--bg-primary); }
 #status-bar {
   display: flex; justify-content: space-between; align-items: center;
   padding: 4px 16px; font-size: 12px; background: var(--bg-status);
@@ -112,6 +112,15 @@ html, body {
   font-family: var(--editor-font-family);
   font-size: var(--editor-font-size);
   line-height: 1.8;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Force Milkdown's entire DOM tree to follow our theme colors */
+#editor-container .milkdown,
+#editor-container .milkdown *:not(code):not(pre) {
+  background: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 /* Milkdown editor internal content */
@@ -120,16 +129,44 @@ html, body {
   font-size: var(--editor-font-size);
   line-height: 1.8;
   outline: none;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Override Crepe theme's hardcoded surface/background colors */
+#editor-container .milkdown [class*="crepe"],
+#editor-container .milkdown [class*="surface"],
+#editor-container .milkdown [class*="panel"],
+#editor-container .milkdown [class*="toolbar"],
+#editor-container .milkdown [class*="menu"] {
+  background: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 /* Headings */
-#editor-container .milkdown h1 { font-size: 2em; margin: 0.67em 0; }
-#editor-container .milkdown h2 { font-size: 1.5em; margin: 0.75em 0; }
-#editor-container .milkdown h3 { font-size: 1.17em; margin: 0.83em 0; }
+#editor-container .milkdown h1 { font-size: 2em; margin: 0.67em 0; color: var(--text-primary); }
+#editor-container .milkdown h2 { font-size: 1.5em; margin: 0.75em 0; color: var(--text-primary); }
+#editor-container .milkdown h3 { font-size: 1.17em; margin: 0.83em 0; color: var(--text-primary); }
+#editor-container .milkdown h4,
+#editor-container .milkdown h5,
+#editor-container .milkdown h6 { color: var(--text-primary); }
 
-/* Code blocks and inline code */
+/* Paragraphs and text */
+#editor-container .milkdown p,
+#editor-container .milkdown li,
+#editor-container .milkdown blockquote {
+  color: var(--text-primary);
+}
+
+/* Code blocks — keep dark background even in light theme for readability */
+#editor-container .milkdown pre {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+}
 #editor-container .milkdown code {
   font-family: 'Consolas', 'Courier New', 'SimSun', monospace;
+  color: var(--text-primary);
 }
 
 /* Tables — prevent column overlap */
@@ -146,13 +183,14 @@ html, body {
   word-break: break-word;
   overflow-wrap: break-word;
   min-width: 60px;
+  color: var(--text-primary);
 }
 #editor-container .milkdown th {
   background: var(--bg-secondary);
   font-weight: 600;
 }
 
-/* Force Milkdown color scheme to follow our theme */
+/* Force Milkdown color scheme for dark mode */
 body.dark-theme #editor-container .milkdown {
   color-scheme: dark;
 }
