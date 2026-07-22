@@ -1,0 +1,55 @@
+{
+  "name": "md-editor",
+  "version": "1.0.0",
+  "description": "WYSIWYG Markdown Editor for Windows",
+  "main": "electron/main.js",
+  "scripts": {
+    "dev": "vite build --watch & sleep 2 && electron .",
+    "build:renderer": "vite build",
+    "start": "electron .",
+    "pack": "npm run build:renderer && electron-builder --win",
+    "icon": "node scripts/generate-icon.js"
+  },
+  "dependencies": {
+    "@milkdown/crepe": "^7.21.3",
+    "mermaid": "^11.16.0"
+  },
+  "devDependencies": {
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8",
+    "vite": "^6.4.3"
+  },
+  "build": {
+    "appId": "com.markdown-editor.app",
+    "productName": "Markdown Editor",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "electron/**/*",
+      "dist-renderer/**/*",
+      "assets/**/*"
+    ],
+    "fileAssociations": [
+      {
+        "ext": [
+          "md",
+          "markdown",
+          "mdown",
+          "mdtext"
+        ],
+        "name": "Markdown",
+        "description": "Markdown document"
+      }
+    ],
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "allowToChangeInstallationDirectory": true
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.png"
+    }
+  }
+}
