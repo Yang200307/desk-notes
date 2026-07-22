@@ -157,18 +157,36 @@ function setupIPC() {
   ipcMain.handle('dialog:show-error', async (_e, title, msg) => { dialog.showErrorBox(title, msg); return { success: true }; });
 }
 
+// ── Pending file queue (wait for renderer ready) ──
+let pendingFile = null;
+
+// Register BEFORE whenReady to catch early open-file events (Windows)
+app.on('open-file', (_e, fp) => {
+  _e.preventDefault();
+  if (mainWindow && mainWindow.webContents.isLoading() === false) {
+    loadFile(fp);
+  } else {
+    pendingFile = fp;
+  }
+});
+
 // ── Lifecycle ──
 app.whenReady().then(() => {
   setupIPC();
   buildMenu();
   createWindow();
 
-  // Already inside whenReady(), so app is always ready at this point
-  app.on('open-file', (_e, fp) => loadFile(fp));
-
-  // Open file from command-line arg (double-click in Explorer)
-  const fileArg = process.argv.slice(1).find(a => a.match(/\.(md|markdown)$/i));
-  if (fileArg) loadFile(fileArg);
+  // Wait for renderer to fully load before sending file content
+  mainWindow.webContents.on('did-finish-load', () => {
+    // Check command-line arg first (Windows double-click when app was closed)
+    const fileArg = process.argv.find(a => a.match(/\.(md|markdown)$/i));
+    if (fileArg && !pendingFile) {
+      loadFile(fileArg);
+    } else if (pendingFile) {
+      loadFile(pendingFile);
+      pendingFile = null;
+    }
+  });
 });
 
 app.on('window-all-closed', () => app.quit());

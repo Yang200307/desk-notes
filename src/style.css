@@ -46,9 +46,10 @@ body.dark-theme {
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body {
   height: 100%; overflow: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  font-family: 'Times New Roman', '宋体', SimSun, 'Microsoft YaHei', serif;
   background: var(--bg-primary); color: var(--text-primary);
   transition: background 0.3s, color 0.3s;
+  font-size: 16px; line-height: 1.7;
 }
 
 /* ========================================
@@ -101,6 +102,24 @@ html, body {
    ======================================== */
 #editor-container .milkdown {
   max-width: 100%; margin: 0 auto; padding: 40px 48px 120px; min-height: 100%;
+  font-family: 'Times New Roman', '宋体', SimSun, 'Microsoft YaHei', serif;
+  font-size: 16px; line-height: 1.8;
+}
+
+/* Milkdown editor internal content */
+#editor-container .milkdown .ProseMirror {
+  font-family: 'Times New Roman', '宋体', SimSun, 'Microsoft YaHei', serif;
+  font-size: 16px; line-height: 1.8;
+}
+
+/* Headings */
+#editor-container .milkdown h1 { font-size: 2em; margin: 0.67em 0; }
+#editor-container .milkdown h2 { font-size: 1.5em; margin: 0.75em 0; }
+#editor-container .milkdown h3 { font-size: 1.17em; margin: 0.83em 0; }
+
+/* Code blocks and inline code */
+#editor-container .milkdown code {
+  font-family: 'Consolas', 'Courier New', 'SimSun', monospace;
 }
 
 /* Force Milkdown color scheme to follow our theme */
