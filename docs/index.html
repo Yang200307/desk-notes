@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>桌面工具 · Desktop Tool</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+      background: #f5f5f5;
+      color: #333;
+      display: flex; justify-content: center; align-items: center;
+      min-height: 100vh; padding: 20px;
+    }
+    .card {
+      background: #fff; border-radius: 12px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+      max-width: 520px; width: 100%; padding: 48px 40px;
+    }
+    .card h1 { font-size: 24px; font-weight: 600; margin-bottom: 8px; color: #1a1a1a; }
+    .card .version { font-size: 14px; color: #999; margin-bottom: 32px; }
+    .download-btn {
+      display: block; width: 100%; padding: 16px 24px;
+      background: #1a1a1a; color: #fff; text-align: center;
+      border-radius: 8px; text-decoration: none; font-size: 16px;
+      font-weight: 500; transition: background 0.2s; margin-bottom: 8px;
+    }
+    .download-btn:hover { background: #333; }
+    .download-btn .size { font-size: 13px; font-weight: 400; opacity: 0.7; }
+    .download-btn .platform { display: block; font-size: 12px; opacity: 0.6; margin-top: 4px; }
+    .divider { border: none; border-top: 1px solid #eee; margin: 32px 0; }
+    .disclaimer { font-size: 11px; color: #aaa; line-height: 1.8; }
+    .disclaimer strong { color: #888; display: block; margin-bottom: 4px; }
+    .footer { margin-top: 24px; text-align: center; font-size: 11px; color: #ccc; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>桌面工具</h1>
+    <p class="version">Windows · v1.0.0 · 112 MB</p>
+
+    <a class="download-btn"
+       href="https://github.com/Yang200307/desk-notes/releases/latest/download/Markdown-Editor-Setup-1.0.0.exe"
+       id="download-link">
+      下载 Windows 版
+      <span class="size">112 MB</span>
+      <span class="platform">适用于 Windows 10 及以上系统</span>
+    </a>
+
+    <hr class="divider">
+
+    <div class="disclaimer">
+      <strong>免责声明</strong>
+      本工具仅供个人学习、研究及自用，不面向公众发布或提供。使用者应自行评估其适用性，并自行承担全部使用风险。本工具按"现状"提供，不附带任何形式的明示或默示担保，包括但不限于对适销性、特定用途适用性及不侵权的担保。
+
+      在任何情况下，本工具的作者、贡献者及分发者均不对因使用或无法使用本工具而产生的任何直接、间接、附带、特殊、惩罚性或后果性损害（包括但不限于数据丢失、业务中断、设备损坏）承担责任，即使已被告知发生此类损害的可能性。
+
+      如本工具中引用了任何第三方内容或开源组件，相关权利归原权利人所有。若您认为本工具存在任何版权或知识产权侵权问题，请通过 GitHub 仓库 Issues 联系，我们将在核实后及时处理或删除相关内容。
+
+      下载、安装或使用本工具即表示您已阅读、理解并同意上述全部条款。如不同意，请勿下载或使用本工具。
+    </div>
+
+    <p class="footer">仅供个人使用 · Personal Use Only</p>
+  </div>
+
+  <script>
+    // Try to fetch latest release info to update version dynamically
+    fetch('https://api.github.com/repos/Yang200307/desk-notes/releases/latest')
+      .then(r => r.json())
+      .then(data => {
+        if (data.tag_name) {
+          document.querySelector('.version').textContent =
+            'Windows · ' + data.tag_name + ' · 112 MB';
+        }
+      })
+      .catch(() => { /* Use static fallback */ });
+  </script>
+</body>
+</html>
