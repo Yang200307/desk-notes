@@ -9,10 +9,12 @@
     "build:renderer": "vite build",
     "start": "electron .",
     "pack": "npm run build:renderer && electron-builder --win",
+    "update:desktop": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/update-desktop.ps1",
     "icon": "node scripts/generate-icon.js"
   },
   "dependencies": {
     "@milkdown/crepe": "^7.21.3",
+    "electron-updater": "^6.8.9",
     "mermaid": "^11.16.0"
   },
   "devDependencies": {
@@ -50,6 +52,13 @@
     },
     "win": {
       "target": "nsis"
-    }
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Yang200307",
+        "repo": "desk-notes"
+      }
+    ]
   }
 }

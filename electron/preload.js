@@ -5,6 +5,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   readFile: (fp) => ipcRenderer.invoke('file:read', fp),
   writeFile: (fp, content) => ipcRenderer.invoke('file:write', fp, content),
   openFileDialog: () => ipcRenderer.invoke('file:open-dialog'),
+  saveFileDialog: () => ipcRenderer.invoke('file:save-dialog'),
+  setCurrentFile: (fp) => ipcRenderer.invoke('file:set-current', fp),
   listDir: (dirPath) => ipcRenderer.invoke('dir:list', dirPath),
   exportPDF: () => ipcRenderer.invoke('export:pdf'),
   getSystemTheme: () => ipcRenderer.invoke('theme:get-system'),
@@ -14,4 +16,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setDirty: (dirty) => ipcRenderer.invoke('dirty:set', dirty),
   forceClose: () => ipcRenderer.invoke('confirm:force-close'),
   cancelClose: () => ipcRenderer.invoke('confirm:cancel-close'),
+  confirmUnsaved: (context) => ipcRenderer.invoke('dialog:confirm-unsaved', context),
 });

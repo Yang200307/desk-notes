@@ -1,6 +1,10 @@
 // src/theme.js
 const THEME_KEY = 'md-editor-theme';
 
+// Store listener reference for potential cleanup
+let systemThemeListener = null;
+let systemThemeMediaQuery = null;
+
 async function getSystemTheme() {
   if (window.electronAPI) {
     try { return await window.electronAPI.getSystemTheme(); } catch { /* fall through */ }
@@ -22,11 +26,17 @@ export async function initTheme() {
   applyTheme(systemTheme);
 
   // Follow system theme changes only when user hasn't set manual preference
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+  if (systemThemeMediaQuery && systemThemeListener) {
+    systemThemeMediaQuery.removeEventListener('change', systemThemeListener);
+  }
+  const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+  systemThemeMediaQuery = mediaQuery;
+  systemThemeListener = (e) => {
     if (!localStorage.getItem(THEME_KEY)) {
       applyTheme(e.matches ? 'dark' : 'light');
     }
-  });
+  };
+  mediaQuery.addEventListener('change', systemThemeListener);
 
   return systemTheme;
 }

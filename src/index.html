@@ -15,19 +15,32 @@
   <div id="app">
     <aside id="sidebar">
       <div id="sidebar-header">
-        <span class="sidebar-title">文件列表</span>
+        <div id="sidebar-tabs">
+          <button class="sidebar-tab active" data-tab="files">文件</button>
+          <button class="sidebar-tab" data-tab="outline">目录</button>
+        </div>
         <button id="btn-open-file" title="打开文件 (Ctrl+O)">📂</button>
       </div>
-      <div id="file-list">
+      <div id="file-list" class="sidebar-panel active">
         <div class="file-item placeholder">打开文件以开始</div>
+      </div>
+      <div id="outline-panel" class="sidebar-panel">
+        <div id="outline-toolbar">
+          <input id="outline-search" type="search" placeholder="搜索目录" aria-label="搜索目录">
+          <button id="outline-collapse-all" type="button" title="折叠全部章节" aria-label="折叠全部章节">⊟</button>
+        </div>
+        <div id="outline-list">
+          <div class="outline-item placeholder">打开文件后显示目录</div>
+        </div>
       </div>
     </aside>
     <div id="resizer"></div>
     <main id="main-area">
       <div id="editor-container"></div>
       <div id="status-bar">
-        <span id="status-path">未打开文件</span>
+        <span id="status-path" title="未打开文件">未打开文件</span>
         <span id="status-save">—</span>
+        <span id="status-font-size">18px</span>
       </div>
     </main>
   </div>

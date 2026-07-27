@@ -2,11 +2,18 @@
 const { app, BrowserWindow, Menu, ipcMain, dialog, nativeTheme } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { autoUpdater } = require('electron-updater');
 
 let mainWindow = null;
 let currentFilePath = null;
 let isDirty = false;
 let forceClose = false;
+
+function runRendererSetting(method, fallbackAction) {
+  if (!mainWindow) return;
+  mainWindow.webContents.executeJavaScript(`window.__settings?.${method}()`)
+    .catch(() => mainWindow?.webContents.send('menu:action', fallbackAction));
+}
 
 // ── Window ──
 function createWindow() {
@@ -27,12 +34,24 @@ function createWindow() {
   });
 
   const isDev = process.argv.includes('--dev');
+  const isDebug = process.argv.includes('--devtools') || isDev;
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173');
-    mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(path.join(__dirname, '..', 'dist-renderer', 'index.html'));
   }
+  if (isDebug) {
+    mainWindow.webContents.openDevTools();
+  }
+
+  // Capture renderer console messages
+  mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
+    const levels = ['verbose', 'info', 'warning', 'error'];
+    fs.appendFileSync(
+      path.join(__dirname, '..', 'renderer-console.log'),
+      `[${new Date().toISOString()}] [${levels[level]}] ${message}\n`
+    );
+  });
 
   mainWindow.once('ready-to-show', () => mainWindow.show());
   mainWindow.on('closed', () => { mainWindow = null; });
@@ -58,7 +77,7 @@ function buildMenu() {
         { label: '导出 PDF...', accelerator: 'Ctrl+Shift+P',
           click: () => mainWindow?.webContents.send('menu:action', 'export-pdf') },
         { type: 'separator' },
-        { label: '退出', accelerator: 'Alt+F4', click: () => app.quit() },
+        { label: '退出', accelerator: 'Alt+F4', click: () => mainWindow?.close() },
       ],
     },
     {
@@ -87,15 +106,15 @@ function buildMenu() {
       submenu: [
         {
           label: '字体切换',
-          click: () => mainWindow?.webContents.send('menu:action', 'setting-font'),
+          click: () => runRendererSetting('cycleFont', 'setting-font')
         },
         {
           label: '字号切换',
-          click: () => mainWindow?.webContents.send('menu:action', 'setting-size'),
+          click: () => runRendererSetting('cycleSize', 'setting-size')
         },
         {
           label: '页面宽度',
-          click: () => mainWindow?.webContents.send('menu:action', 'setting-padding'),
+          click: () => runRendererSetting('cycleWidth', 'setting-width')
         },
       ],
     },
@@ -121,8 +140,6 @@ async function handleOpenFile() {
 function loadFile(filePath) {
   try {
     const content = fs.readFileSync(filePath, 'utf-8');
-    currentFilePath = filePath;
-    mainWindow?.setTitle(`${path.basename(filePath)} — Markdown 编辑器`);
     mainWindow?.webContents.send('file:opened', { path: filePath, content });
   } catch (err) {
     dialog.showErrorBox('错误', `无法打开文件: ${err.message}`);
@@ -137,8 +154,12 @@ function setupIPC() {
   });
 
   ipcMain.handle('file:write', async (_e, fp, content) => {
-    try { fs.writeFileSync(fp, content, 'utf-8'); currentFilePath = fp; return { success: true }; }
-    catch (err) { return { success: false, error: err.message }; }
+    try {
+      fs.writeFileSync(fp, content, 'utf-8');
+      currentFilePath = fp;
+      mainWindow?.setTitle(`${path.basename(fp)} — Markdown 编辑器`);
+      return { success: true };
+    } catch (err) { return { success: false, error: err.message }; }
   });
 
   ipcMain.handle('file:open-dialog', async () => {
@@ -146,9 +167,23 @@ function setupIPC() {
     if (result.canceled || !result.filePaths.length) return { success: false };
     const fp = result.filePaths[0];
     const content = fs.readFileSync(fp, 'utf-8');
-    currentFilePath = fp;
-    mainWindow?.setTitle(`${path.basename(fp)} — Markdown Editor`);
     return { success: true, path: fp, content };
+  });
+
+  ipcMain.handle('file:save-dialog', async () => {
+    const result = await dialog.showSaveDialog(mainWindow, {
+      title: '保存 Markdown 文件',
+      defaultPath: currentFilePath || 'document.md',
+      filters: [MD_FILE_FILTER],
+    });
+    if (result.canceled || !result.filePath) return { success: false, canceled: true };
+    return { success: true, path: result.filePath };
+  });
+
+  ipcMain.handle('file:set-current', (_e, fp) => {
+    currentFilePath = fp;
+    mainWindow?.setTitle(`${path.basename(fp)} — Markdown 编辑器`);
+    return { success: true };
   });
 
   ipcMain.handle('dir:list', async (_e, dirPath) => {
@@ -182,6 +217,20 @@ function setupIPC() {
 
   ipcMain.handle('theme:get-system', () => nativeTheme.shouldUseDarkColors ? 'dark' : 'light');
   ipcMain.handle('dialog:show-error', async (_e, title, msg) => { dialog.showErrorBox(title, msg); return { success: true }; });
+  ipcMain.handle('dialog:confirm-unsaved', async (_e, context) => {
+    const isClose = context === 'close';
+    const result = await dialog.showMessageBox(mainWindow, {
+      type: 'warning',
+      title: '未保存的修改',
+      message: isClose ? '关闭前要保存当前文件吗？' : '切换文件前要保存当前文件吗？',
+      detail: '选择“取消”可返回编辑器，当前内容不会丢失。',
+      buttons: [isClose ? '保存并退出' : '保存并切换', isClose ? '放弃并退出' : '放弃并切换', '取消'],
+      defaultId: 0,
+      cancelId: 2,
+      noLink: true,
+    });
+    return ['save', 'discard', 'cancel'][result.response];
+  });
 
   // Dirty state tracking for close confirmation
   ipcMain.handle('dirty:set', (_e, dirty) => { isDirty = dirty; });
@@ -210,6 +259,39 @@ app.on('open-file', (_e, fp) => {
 });
 
 // ── Lifecycle ──
+// ── Auto Updater ──
+function setupAutoUpdater() {
+  // Only check for updates in the packaged app (not dev mode)
+  if (!app.isPackaged) return;
+
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+
+  autoUpdater.on('update-downloaded', (info) => {
+    dialog.showMessageBox(mainWindow, {
+      type: 'info',
+      title: '更新已下载',
+      message: `新版本 ${info.version} 已准备就绪，是否立即重启安装？`,
+      buttons: ['立即重启', '稍后提醒'],
+      defaultId: 0,
+      cancelId: 1,
+    }).then(({ response }) => {
+      if (response === 0) {
+        autoUpdater.quitAndInstall();
+      }
+    });
+  });
+
+  autoUpdater.on('error', (err) => {
+    console.error('自动更新检查失败:', err.message);
+  });
+
+  // Check for updates 3 seconds after startup to let the app settle
+  setTimeout(() => {
+    autoUpdater.checkForUpdatesAndNotify();
+  }, 3000);
+}
+
 app.whenReady().then(() => {
   setupIPC();
   buildMenu();
@@ -217,6 +299,7 @@ app.whenReady().then(() => {
 
   // Wait for renderer to fully load before sending file content
   mainWindow.webContents.on('did-finish-load', () => {
+    setupAutoUpdater();
     // Check command-line arg first (Windows double-click when app was closed)
     const fileArg = process.argv.find(a => a.match(/\.(md|markdown)$/i));
     if (fileArg && !pendingFile) {
@@ -225,6 +308,7 @@ app.whenReady().then(() => {
       loadFile(pendingFile);
       pendingFile = null;
     }
+
   });
 });
 

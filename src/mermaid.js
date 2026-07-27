@@ -73,6 +73,8 @@ export function clearMermaidPreviews(container) {
   container.querySelectorAll('pre[data-mermaid-rendered]').forEach(pre => {
     delete pre.dataset.mermaidRendered;
   });
+  // Clear render cache to free memory when switching files
+  rendered.clear();
 }
 
 export async function refreshMermaid(container) {

@@ -48,11 +48,13 @@ export async function refreshSidebar() {
     if (file.path === activeFile) item.classList.add('active');
 
     item.addEventListener('click', async () => {
-      if (!window.electronAPI) return;
+      if (!window.electronAPI) {
+        console.error('electronAPI not available — cannot read file');
+        return;
+      }
       const res = await window.electronAPI.readFile(file.path);
       if (res.success) {
-        setActiveFile(file.path);
-        onFileSelectCallback?.(file.path, res.content);
+        await onFileSelectCallback?.(file.path, res.content);
       } else {
         window.electronAPI.showError('错误', `无法读取文件: ${res.error}`);
       }
