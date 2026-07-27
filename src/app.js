@@ -9,6 +9,7 @@ import { exportToPDF } from './export.js';
 let currentFilePath = null;
 let editorApi = null;
 let autoSaveTimer = null;
+let saveQueue = Promise.resolve();
 let isDirty = false;
 let lastSavedMarkdown = '';
 const AUTO_SAVE_DELAY = 2000;
@@ -199,7 +200,7 @@ function markClean() {
   window.electronAPI?.setDirty(false);
 }
 
-async function saveCurrentFile(isAutoSave = false) {
+async function performSave(isAutoSave = false) {
   if (!editorApi || !window.electronAPI) return;
 
   // If no file is open yet, prompt to save as new file
@@ -215,16 +216,28 @@ async function saveCurrentFile(isAutoSave = false) {
     await refreshSidebar();
   }
 
+  const targetPath = currentFilePath;
   const md = editorApi.getMarkdown();
-  const result = await window.electronAPI.writeFile(currentFilePath, md);
+  const result = await window.electronAPI.writeFile(targetPath, md);
   if (result.success) {
     lastSavedMarkdown = md;
-    markClean();
-    updateSaveStatus('已保存');
+    if (currentFilePath === targetPath && editorApi.getMarkdown() === md) {
+      markClean();
+      updateSaveStatus('已保存');
+    } else {
+      markDirty();
+      updateSaveStatus('未保存…');
+    }
   } else {
     updateSaveStatus('保存失败', true);
   }
   return result;
+}
+
+function saveCurrentFile(isAutoSave = false) {
+  const operation = () => performSave(isAutoSave);
+  saveQueue = saveQueue.then(operation, operation);
+  return saveQueue;
 }
 
 function updateSaveStatus(text, isError = false) {
@@ -266,6 +279,7 @@ async function handleConfirmClose() {
   const choice = await window.electronAPI?.confirmUnsaved('close');
   if (choice === 'save') {
     if ((await saveCurrentFile())?.success) window.electronAPI?.forceClose();
+    else window.electronAPI?.cancelClose();
   } else if (choice === 'discard') {
     window.electronAPI?.forceClose();
   } else {
@@ -349,6 +363,7 @@ function setupMenuHandler() {
 }
 
 async function handleExportPDF() {
+  await saveQueue.catch(() => {});
   updateSaveStatus('正在导出 PDF…');
   const result = await exportToPDF();
   if (result.success) updateSaveStatus('PDF 已导出');
@@ -356,6 +371,57 @@ async function handleExportPDF() {
     updateSaveStatus('导出失败', true);
     window.electronAPI?.showError('导出错误', result.error || '未知错误');
   }
+}
+
+async function prepareForPrint() {
+  await renderMermaidBlocks(editorContainer);
+  if (document.fonts?.ready) await document.fonts.ready;
+  const images = [...document.images];
+  await Promise.all(images.map(image => image.complete
+    ? image.decode?.().catch(() => {})
+    : new Promise(resolve => {
+        image.addEventListener('load', resolve, { once: true });
+        image.addEventListener('error', resolve, { once: true });
+      })));
+  await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  return true;
+}
+
+function setupUpdateHandler() {
+  const banner = document.getElementById('update-banner');
+  const message = document.getElementById('update-message');
+  const installButton = document.getElementById('update-install');
+  const dismissButton = document.getElementById('update-dismiss');
+  if (!banner || !message || !installButton || !dismissButton || !window.electronAPI) return;
+
+  window.electronAPI.onUpdateStatus(status => {
+    if (!status || status.state === 'idle') {
+      banner.hidden = true;
+      return;
+    }
+    message.textContent = typeof status.message === 'string' ? status.message : '';
+    installButton.hidden = status.state !== 'downloaded';
+    dismissButton.hidden = status.state === 'checking' || status.state === 'downloading';
+    banner.hidden = false;
+  });
+
+  dismissButton.addEventListener('click', () => { banner.hidden = true; });
+  installButton.addEventListener('click', async () => {
+    if (isDirty) {
+      const choice = await window.electronAPI.confirmUnsaved('update');
+      if (choice === 'cancel' || !choice) return;
+      if (choice === 'save' && !(await saveCurrentFile())?.success) return;
+      if (choice === 'discard') {
+        isDirty = false;
+        await window.electronAPI.setDirty(false);
+      }
+    }
+    await window.electronAPI.setDirty(false);
+    const result = await window.electronAPI.installUpdate();
+    if (!result?.success) {
+      updateSaveStatus(result?.needsSave ? '请先保存文档' : '无法安装更新', true);
+    }
+  });
 }
 
 // ── File Open from Menu/Double-click ──
@@ -749,6 +815,8 @@ async function bootstrap() {
     cycleSize: () => cycleSetting('fontSize', SIZE_OPTIONS),
     cycleWidth: () => cycleSetting('contentWidth', WIDTH_OPTIONS),
   };
+  window.__prepareForPrint = prepareForPrint;
+  setupUpdateHandler();
 }
 
 bootstrap().catch(err => {

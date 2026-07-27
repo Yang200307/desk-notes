@@ -1,37 +1,66 @@
 {
   "name": "md-editor",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "WYSIWYG Markdown Editor for Windows",
-  "author": "Markdown Editor",
+  "author": "Yang200307",
+  "license": "MIT",
+  "homepage": "https://github.com/Yang200307/desk-notes#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Yang200307/desk-notes.git"
+  },
+  "bugs": "https://github.com/Yang200307/desk-notes/issues",
   "main": "electron/main.js",
   "scripts": {
-    "dev": "vite build && electron .",
+    "dev": "concurrently --kill-others --success first \"vite --host 127.0.0.1\" \"wait-on http://127.0.0.1:5173 && electron . --dev\"",
     "build:renderer": "vite build",
     "start": "electron .",
-    "pack": "npm run build:renderer && electron-builder --win",
+    "pack": "npm run check && set \"ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/\" && set \"ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/\" && electron-builder --win --publish never --config.win.signExecutable=false",
+    "release": "npm run check && node scripts/require-signing.js && set \"ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/\" && set \"ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/\" && electron-builder --win --publish always",
+    "check": "npm run test && npm run licenses && npm run build:renderer",
+    "test": "node --test test/*.test.js",
+    "test:pdf": "electron test/pdf-integration.js",
+    "licenses": "node scripts/generate-third-party-notices.js",
     "update:desktop": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/update-desktop.ps1",
     "icon": "node scripts/generate-icon.js"
   },
   "dependencies": {
-    "@milkdown/crepe": "^7.21.3",
-    "electron-updater": "^6.8.9",
-    "mermaid": "^11.16.0"
+    "electron-updater": "6.8.9"
   },
   "devDependencies": {
-    "electron": "^33.4.11",
-    "electron-builder": "^25.1.8",
-    "vite": "^6.4.3"
+    "@milkdown/crepe": "7.21.3",
+    "concurrently": "10.0.4",
+    "electron": "43.2.0",
+    "electron-builder": "26.15.3",
+    "mermaid": "11.16.0",
+    "sharp": "0.35.3",
+    "vite": "8.1.5",
+    "wait-on": "9.1.0"
   },
   "build": {
     "appId": "com.markdown-editor.app",
     "productName": "Markdown Editor",
     "directories": {
-      "output": "dist"
+      "output": "release"
     },
     "files": [
       "electron/**/*",
       "dist-renderer/**/*",
       "assets/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "LICENSE",
+        "to": "legal/LICENSE.txt"
+      },
+      {
+        "from": "PRIVACY.md",
+        "to": "legal/PRIVACY.md"
+      },
+      {
+        "from": "THIRD_PARTY_NOTICES.md",
+        "to": "legal/THIRD_PARTY_NOTICES.md"
+      }
     ],
     "fileAssociations": [
       {
@@ -52,8 +81,7 @@
     },
     "win": {
       "target": "nsis",
-      "sign": null,
-      "signAndEditExecutable": false
+      "icon": "assets/icon.png"
     },
     "publish": [
       {

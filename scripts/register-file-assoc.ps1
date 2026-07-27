@@ -6,13 +6,13 @@ $ErrorActionPreference = 'Stop'
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
 
 if ([string]::IsNullOrWhiteSpace($AppExe)) {
-    $AppExe = Join-Path $ProjectRoot 'dist\win-unpacked\Markdown Editor.exe'
+    $AppExe = Join-Path $ProjectRoot 'release\win-unpacked\Markdown Editor.exe'
 }
 
 $AppExe = [System.IO.Path]::GetFullPath($AppExe)
 $AppDir = Split-Path -Parent $AppExe
 $ProgId = 'markdown-editor'
-$AppName = 'Markdown Reader'
+$AppName = 'Markdown Editor'
 $Extensions = @('.md', '.markdown', '.mdown', '.mdtext')
 
 if (-not (Test-Path -LiteralPath $AppExe -PathType Leaf)) {
@@ -61,7 +61,7 @@ $WshShell = New-Object -ComObject WScript.Shell
 $Shortcut = $WshShell.CreateShortcut($ShortcutPath)
 $Shortcut.TargetPath = $AppExe
 $Shortcut.WorkingDirectory = $AppDir
-$Shortcut.Description = 'Markdown Reader - latest desktop build'
+$Shortcut.Description = 'Markdown Editor - current verified build'
 $Shortcut.IconLocation = "$AppExe,0"
 $Shortcut.Save()
 

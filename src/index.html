@@ -4,10 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data: file:;
+        content="default-src 'self';
                  img-src 'self' file: data: blob: https:;
-                 script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:;
-                 style-src 'self' 'unsafe-inline';">
+                 script-src 'self' blob:;
+                 style-src 'self' 'unsafe-inline';
+                 font-src 'self' data:;
+                 worker-src 'self' blob:;
+                 connect-src 'self' ws://127.0.0.1:5173;
+                 object-src 'none'; base-uri 'none'; frame-src 'none';">
   <title>Markdown 编辑器</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -36,6 +40,11 @@
     </aside>
     <div id="resizer"></div>
     <main id="main-area">
+      <div id="update-banner" role="status" aria-live="polite" hidden>
+        <span id="update-message"></span>
+        <button id="update-install" type="button" hidden>重启并安装</button>
+        <button id="update-dismiss" type="button" aria-label="关闭更新提示">×</button>
+      </div>
       <div id="editor-container"></div>
       <div id="status-bar">
         <span id="status-path" title="未打开文件">未打开文件</span>

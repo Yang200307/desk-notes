@@ -162,6 +162,18 @@ html, body {
 /* Main Area */
 #main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
 #editor-container { flex: 1; overflow: auto; background: var(--bg-primary); }
+#update-banner {
+  display: flex; align-items: center; gap: 10px; padding: 7px 12px;
+  color: var(--text-primary); background: var(--sidebar-active);
+  border-bottom: 1px solid var(--border-color); font-size: 13px; flex-shrink: 0;
+}
+#update-banner[hidden] { display: none; }
+#update-message { flex: 1; min-width: 0; }
+#update-install, #update-dismiss {
+  border: 1px solid var(--border-color); border-radius: 5px; padding: 4px 10px;
+  color: var(--text-primary); background: var(--bg-primary); cursor: pointer;
+}
+#update-dismiss { border: 0; padding: 2px 7px; background: transparent; font-size: 18px; }
 #status-bar {
   display: grid; grid-template-columns: minmax(0, 1fr) auto 56px; gap: 18px; align-items: center;
   padding: 4px 16px; font-size: 12px; background: var(--bg-status);
@@ -349,15 +361,31 @@ body.dark-theme #editor-container .milkdown {
 /* ========================================
    Print (PDF Export)
    ======================================== */
-@page { size: A4; margin: 0; }
+@page { size: A4; }
 
 @media print {
-  #sidebar, #resizer, #status-bar { display: none !important; }
-  #editor-container .milkdown { max-width: 100%; padding: 20px; }
-  body { background: white !important; color: black !important; }
-  .mermaid-preview { break-inside: avoid; }
+  :root, body.light-theme, body.dark-theme {
+    --bg-primary: #fff;
+    --bg-secondary: #f5f5f5;
+    --text-primary: #000;
+    --text-secondary: #333;
+    --heading-primary: #111;
+    --heading-secondary: #222;
+    --border-color: #ccc;
+  }
+  html, body, #app, #main-area, #editor-container {
+    height: auto !important; min-height: 0 !important; overflow: visible !important;
+  }
+  #app, #main-area { display: block !important; width: auto !important; }
+  #sidebar, #resizer, #status-bar, #update-banner { display: none !important; }
+  #editor-container .milkdown {
+    width: auto !important; max-width: none !important; min-height: 0 !important;
+    margin: 0 !important; padding: 0 !important; background: #fff !important; color: #000 !important;
+  }
+  #editor-container .milkdown .ProseMirror { background: #fff !important; color: #000 !important; }
+  .mermaid-preview, pre, table, blockquote, img { break-inside: avoid; }
 }
 
-@media (max-width: 900px) {
+@media screen and (max-width: 900px) {
   #editor-container .milkdown { padding: 36px 28px 80px; }
 }

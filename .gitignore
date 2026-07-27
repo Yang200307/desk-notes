@@ -1,7 +1,14 @@
 node_modules/
 dist/
+dist-local/
+dist-next/
+dist-review-config/
 dist-renderer/
+release/
+release-next/
 *.exe
 *.log
 screenshots/
 Codex*.md
+人工审核后删除/
+待审核后清理/

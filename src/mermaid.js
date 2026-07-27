@@ -13,7 +13,7 @@ function getConfig(theme) {
   return {
     startOnLoad: false,
     theme: isDark ? 'dark' : 'default',
-    securityLevel: 'loose',
+    securityLevel: 'strict',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
   };
 }
