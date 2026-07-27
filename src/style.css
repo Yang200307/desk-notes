@@ -349,6 +349,8 @@ body.dark-theme #editor-container .milkdown {
 /* ========================================
    Print (PDF Export)
    ======================================== */
+@page { size: A4; margin: 0; }
+
 @media print {
   #sidebar, #resizer, #status-bar { display: none !important; }
   #editor-container .milkdown { max-width: 100%; padding: 20px; }

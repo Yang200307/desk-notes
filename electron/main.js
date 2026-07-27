@@ -207,7 +207,7 @@ function setupIPC() {
     try {
       const pdfData = await mainWindow.webContents.printToPDF({
         printBackground: true,
-        preferCSSPageSize: true,
+        pageSize: { width: 210000, height: 297000 },  // A4 in microns
         margins: { top: 20, bottom: 20, left: 20, right: 20 },
       });
       fs.writeFileSync(result.filePath, pdfData);
