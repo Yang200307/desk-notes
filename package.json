@@ -51,7 +51,9 @@
       "allowToChangeInstallationDirectory": true
     },
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "sign": null,
+      "signAndEditExecutable": false
     },
     "publish": [
       {
